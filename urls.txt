@@ -1,1 +1,7 @@
 IRF7350PbF n+p
+
+dual n channel
+IRF7103pbf
+
+ethernet jack
+http://uk.farnell.com/te-connectivity-amp/215877-1/jack-modular-w-o-panel-stop-8/dp/3363144
