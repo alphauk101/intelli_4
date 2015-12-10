@@ -1,0 +1,20 @@
+********************************
+Notes:
+
+Use angled ISP headers: http://uk.rs-online.com/web/p/products/6935242/?grossPrice=Y&cm_mmc=UK-PLA-_-google-_-RS+UK+Shopping-_-Google+Shopping&mkwid=scMChJe7S_dc|pcrid|64872701163|pkw||pmt||prd|6935242&gclid=CKiuxajf0ckCFQsEwwodIoYOiA
+These allow the unit to be programmed without being taken apart.
+
+Put a temphuimd onboard saves connectors
+
+
+
+********************************
+
+
+IRF7350PbF n+p
+
+dual n channel
+IRF7103pbf
+
+ethernet jack
+http://uk.farnell.com/te-connectivity-amp/215877-1/jack-modular-w-o-panel-stop-8/dp/3363144
