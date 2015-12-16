@@ -6,6 +6,6 @@ RefOut = 1.25*(1+R1/R2) = 3.75v
 RefAdj (1.25v < RefOut)
 RefAdj = 2.50v
 
-
+RefAdj I (LED I) = RefAdj / 0efOut = 80uA
 
 https://learn.sparkfun.com/tutorials/dotbar-display-driver-hookup-guide
