@@ -1,3 +1,5 @@
 p-channel
 http://uk.farnell.com/infineon/spb08p06p-g/mosfet-p-ch-60v-8-8a-to-263/dp/2212898?ost=SPB08P&selectedCategoryId=&categoryName=All+Categories&categoryNameResp=All+Categories
 
+enclosue
+http://uk.farnell.com/fibox/pc-100-100-ht/enclosure-pc-grey-smoked-transparent/dp/2473456
