@@ -34,7 +34,7 @@ void bargraph::spin()
 {
   for (int b = 0; b < 21; b++) {
     this->setSegment(b);
-    delay(250);
+    delay(50);
   }
 }
 
