@@ -9,7 +9,8 @@ class bargraph
     void init_bargraph(int);
     void spin(void);
     void displayTemp(double);
-
+    void turnOff(void);
+    void allOn(void);
   private:
     int BGPIN;
     void setSegment(int);

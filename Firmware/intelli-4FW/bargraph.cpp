@@ -10,6 +10,10 @@ void bargraph::init_bargraph(int pin)
   this->setSegment(0);
   
 }
+void bargraph::turnOff()
+{
+  this->setSegment(0);
+}
 
 int tmpSeg;
 void bargraph::displayTemp(double temp)
@@ -22,12 +26,18 @@ void bargraph::displayTemp(double temp)
   //the optimum temperature in the four green segments on the display 22 to 26 
 
   temp-=10; //Strip off the 10 degrees we dont care about 
-  tmpSeg = (int)temp;
+  tmpSeg = (unsigned int)temp;
   this->setSegment(tmpSeg);
 }
 
 void bargraph::setSegment(int seg) {
-  analogWrite(this->BGPIN, segment[seg]);
+  if(seg <= 20){
+    analogWrite(this->BGPIN, segment[seg]);
+  }
+}
+
+void bargraph::allOn(){
+  this->setSegment(20);
 }
 
 void bargraph::spin()
