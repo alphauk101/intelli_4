@@ -2,7 +2,11 @@
 #include "ds.h"
 #include "bargraph.h"
 
-
+#include "DS1307RTC.h"
+tmElements_t tmp_time;
+#define LIGHT_FULL 30
+#define LIGHT_HALF 15
+#define LIGHT_OFF  1
 
 ds mDSTemp;
 bargraph mBarGraph;
@@ -23,12 +27,6 @@ volatile bool prev_realy_state, relay_state, red, blue;
 #define LOW_MODE    2
 #define OFF         3
 
-/*
-  unsigned long DAYMODE_LENGTH =   1800000;
-  unsigned long DAWNMODE_LENGTH =  36000000;
-  unsigned long NIGHTMODE_LENGTH = 36000000;
-*/
-
 
 unsigned long DAYMODE_LENGTH =   1800000;
 unsigned long DAWNMODE_LENGTH =  3600000;
@@ -43,7 +41,7 @@ bool PIR_REC = false;
 
 void setup() {
   // put your setup code here, to run once:
-  //Serial.begin(9600);
+  Serial.begin(9600);/*Used to communicate with the lights*/
   //Serial.println("Started");
 
   mBarGraph.init_bargraph(9);
@@ -61,7 +59,7 @@ void setup() {
   //pinMode(PIR_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(PIR_PIN), pir_int, RISING);
 
-  
+
   setBlueLED(false);
 
   setLightingMode();
@@ -73,7 +71,15 @@ void setup() {
 
   pinMode(3, OUTPUT);
   digitalWrite(3, LOW);
+
+  tmp_time.Hour = 20;
+  tmp_time.Minute = 0;
+  tmp_time.Second = 0;
+
+  RTC.write(tmp_time);//Set the time
 }
+
+byte light_value[2];/*Used to pass the ligt values to the RTC -> lighting*/
 
 void loop() {
 
@@ -86,12 +92,12 @@ void loop() {
     mBarGraph.turnOff();
   }
 
-  //if (digitalRead(PIR_PIN)) {
-  if(PIR_REC){
+
+  if (PIR_REC) {
     mBarGraph.allOn();
     delay(150);
     mBarGraph.turnOff();
-    MODE = DAY_MODE;
+    //MODE = DAY_MODE;
     setLightingMode();
     PIR_REC = false;
   }
@@ -100,9 +106,11 @@ void loop() {
 
 
   if (timer.TIMER_ONE_TRIGGERED) {
-    setLightingMode();
+
     timer.TIMER_ONE_TRIGGERED = false;
   }
+
+  setLightingMode();
 }
 
 inline void setRedLED(bool sts)
@@ -126,13 +134,29 @@ inline void setBlueLED(bool sts)
 
 void setLightingMode()
 {
-  state_one = 0;
-  state_zero = 0;
-  relay_state = false;
-  red = false;
-  blue = false;
-  switch (MODE)
-  {
+
+  //get the time and set the light based on the time
+
+  getLightLevel(&light_value[0]);
+
+  light_value[0] |= 0x80;/*msb 1 = white*/
+  light_value[1] &= 0x7F;
+  /*Write these values to the serial*/
+  Serial.write(light_value[0]);
+  Serial.write(light_value[1]);
+
+  //If its during the day its full if its evening then contrast if its night then night.
+
+
+
+  /*
+    state_one = 0;
+    state_zero = 0;
+    relay_state = false;
+    red = false;
+    blue = false;
+    switch (MODE)
+    {
     case DAY_MODE:
       red = true;
       blue = true;
@@ -169,17 +193,19 @@ void setLightingMode()
       timeout = NIGHTMODE_LENGTH;
       MODE = OFF;
       break;
-  }
-  
-  if(relay_state != prev_realy_state){
-    //Because when the relay fires it causes an interrupt we need to make sure we dont acknowledge it    
-    digitalWrite(PIN_RELAY, relay_state);
-    prev_realy_state = relay_state;
-    delay(200);
-    TIMER_TRIGGERED = false;
-  }
-  digitalWrite(0, state_zero);
-  digitalWrite(1, state_one);
+  */
+
+  /*
+    if (relay_state != prev_realy_state) {
+      //Because when the relay fires it causes an interrupt we need to make sure we dont acknowledge it
+      digitalWrite(PIN_RELAY, relay_state);
+      prev_realy_state = relay_state;
+      delay(200);
+      TIMER_TRIGGERED = false;
+    }
+    digitalWrite(0, state_zero);
+    digitalWrite(1, state_one);
+  */
   setRedLED(red);
   setBlueLED(blue);
 
@@ -189,26 +215,58 @@ void setLightingMode()
   timer.startTimer(TIMER_1);
 }
 
-bool last_state;
-inline void switchRelay(bool state) {
-  if (state != last_state) {
-    if (state) {
-      digitalWrite(PIN_RELAY, HIGH);
-    } else {
-      digitalWrite(PIN_RELAY, LOW);
-    }
-    last_state = state;
-  }
-}
 
-static void pir_int()
-{
+static void pir_int() {
   PIR_REC = true;
 }
 
 //Timer callback returns which timer was fired
-static void TimerISR(int timer)
-{
+static void TimerISR(int timer) {
   TIMER_TRIGGERED = true;
+}
+
+
+
+//Gets the time from the rtc and delivers a light setting based on this time
+int light_count;
+byte tmp_min;
+void getLightLevel(byte * buff) {
+
+  //byte 1 = white -> 2 = blue
+  /*First get light level*/
+  if (RTC.read(tmp_time)) {
+    //First check the main areas
+    if ((tmp_time.Hour >= 8) && (tmp_time.Hour < 20)) {
+      //The time is mid day ie 8am > 8pm
+      //Light is full white and partial blue
+      *buff = LIGHT_FULL;
+      *(buff + 1) = LIGHT_OFF;
+    } else if ((tmp_time.Hour > 20) && (tmp_time.Hour <= 23)) {
+      //Its between 8pm and midnight
+      *buff = LIGHT_OFF;
+      *(buff + 1) = LIGHT_FULL;
+    } else if (tmp_time.Hour == 20) {
+      //its the hour of 8 so lets do the dawn
+      if (tmp_time.Minute == 0) {
+        light_count = 0;
+        tmp_min = 0;
+      };
+
+      if (tmp_time.Minute != tmp_min) {
+        if ( (tmp_time.Minute & 0x01) != 0x01) {
+          //its even
+          light_count++;
+        }
+        tmp_min = tmp_time.Minute;
+      }
+      //Slowly toggle between the 2 lights every 2 minutes
+      *buff = (LIGHT_FULL - light_count);
+      *(buff + 1) = light_count;
+    } else {
+      /*Its bassically silly oclcok so lights off.*/
+      *buff = LIGHT_OFF;
+      *(buff + 1) = LIGHT_OFF;
+    }
+  }
 }
 
