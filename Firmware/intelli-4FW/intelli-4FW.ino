@@ -1,3 +1,4 @@
+/*This is a test branch*/
 #include "timer.h"
 #include "ds.h"
 #include "bargraph.h"
@@ -27,6 +28,7 @@ volatile bool prev_realy_state, relay_state, red, blue;
 #define LOW_MODE    2
 #define OFF         3
 
+byte dave = 0;
 
 unsigned long DAYMODE_LENGTH =   1800000;
 unsigned long DAWNMODE_LENGTH =  3600000;
@@ -44,6 +46,7 @@ void setup() {
   Serial.begin(9600);/*Used to communicate with the lights*/
   //Serial.println("Started");
 
+  dave++;
   mBarGraph.init_bargraph(9);
 
   pinMode(LED_RED, OUTPUT);
